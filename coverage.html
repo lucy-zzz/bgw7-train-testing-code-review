@@ -1,0 +1,853 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cmd: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">app/cmd/main.go (0.0%)</option>
+				
+				<option value="file1">app/internal/application/application_default.go (0.0%)</option>
+				
+				<option value="file2">app/internal/handler/vehicle.go (12.7%)</option>
+				
+				<option value="file3">app/internal/loader/vehicle_json.go (0.0%)</option>
+				
+				<option value="file4">app/internal/repository/vehicle_map.go (0.0%)</option>
+				
+				<option value="file5">app/internal/service/vehicle_default.go (0.0%)</option>
+				
+				<option value="file6">app/internal/service/vehicle_stub.go (0.0%)</option>
+				
+				<option value="file7">app/platform/web/request/json.go (100.0%)</option>
+				
+				<option value="file8">app/platform/web/response/error.go (0.0%)</option>
+				
+				<option value="file9">app/platform/web/response/json.go (100.0%)</option>
+				
+				<option value="file10">app/platform/web/response/text.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "app/internal/application"
+        "fmt"
+)
+
+func main() <span class="cov0" title="0">{
+        // env
+        // ...
+
+        // app
+        // - config
+        cfg := &amp;application.ConfigApplicationDefault{
+                ServerAddress: ":8080",
+                LoaderFilePath: "docs/db/vehicles_100.json",
+        }
+        app := application.NewApplicationDefault(cfg)
+        // - setup
+        err := app.SetUp()
+        if err != nil </span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return
+        }</span>
+        // - run
+        <span class="cov0" title="0">err = app.Run()
+        if err != nil </span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return
+        }</span>
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package application
+
+import (
+        "app/internal/handler"
+        "app/internal/loader"
+        "app/internal/repository"
+        "app/internal/service"
+        "net/http"
+
+        "github.com/go-chi/chi/v5"
+        "github.com/go-chi/chi/v5/middleware"
+)
+
+// ConfigApplicationDefault is a struct that represents the configuration for ApplicationDefault
+type ConfigApplicationDefault struct {
+        // Router is the router / multiplexer that will be used by the application
+        Router *chi.Mux
+        // ServerAddress is the address where the server will be listening
+        ServerAddress string
+        // LoaderFilePath is the path to the file that contains the vehicles
+        LoaderFilePath string
+}
+
+// NewApplicationDefault is a function that returns a new instance of ApplicationDefault
+func NewApplicationDefault(cfg *ConfigApplicationDefault) *ApplicationDefault <span class="cov0" title="0">{
+        // default values
+        defaultConfig := &amp;ConfigApplicationDefault{
+                Router: chi.NewRouter(),
+                ServerAddress: ":8080",
+        }
+        if cfg != nil </span><span class="cov0" title="0">{
+                if cfg.Router != nil </span><span class="cov0" title="0">{
+                        defaultConfig.Router = cfg.Router
+                }</span>
+                <span class="cov0" title="0">if cfg.ServerAddress != "" </span><span class="cov0" title="0">{
+                        defaultConfig.ServerAddress = cfg.ServerAddress
+                }</span>
+                <span class="cov0" title="0">if cfg.LoaderFilePath != "" </span><span class="cov0" title="0">{
+                        defaultConfig.LoaderFilePath = cfg.LoaderFilePath
+                }</span>
+        }
+
+        <span class="cov0" title="0">return &amp;ApplicationDefault{
+                router: defaultConfig.Router,
+                serverAddress: defaultConfig.ServerAddress,
+                loaderFilePath: defaultConfig.LoaderFilePath,
+        }</span>
+}
+
+// ApplicationDefault is a struct that implements the Application interface
+type ApplicationDefault struct {
+        // router is the router / multiplexer that will be used by the application
+        router *chi.Mux
+        // serverAddress is the address where the server will be listening
+        serverAddress string
+        // loaderFilePath is the path to the file that contains the vehicles
+        loaderFilePath string
+}
+
+// SetUp is a method that sets up the application
+func (a *ApplicationDefault) SetUp() (err error) <span class="cov0" title="0">{
+        // dependencies
+        // - loader: loader for vehicles
+        ld := loader.NewLoaderVehicleJSON(a.loaderFilePath)
+        // - db: map of vehicles
+        db, err := ld.Load()
+        if err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        // - repository: repository for vehicles
+        <span class="cov0" title="0">rp := repository.NewRepositoryReadVehicleMap(db)
+        // - service: service for vehicles
+        sv := service.NewServiceVehicleDefault(rp)
+        // - handler: handler for vehicles
+        hd := handler.NewHandlerVehicle(sv)
+
+        // routes
+        // - middlewares
+        a.router.Use(middleware.Logger)
+        a.router.Use(middleware.Recoverer)
+        // - endpoints
+        a.router.Route("/vehicles", func(r chi.Router) </span><span class="cov0" title="0">{
+                // Get vehicles by color and year
+                r.Get("/color/{color}/year/{year}", hd.FindByColorAndYear())
+                // Get vehicles by brand between years
+                r.Get("/brand/{brand}/between/{start_year}/{end_year}", hd.FindByBrandAndYearRange())
+                // Get average max speed by brand
+                r.Get("/average_speed/brand/{brand}", hd.AverageMaxSpeedByBrand())
+                // Get average capacity by brand
+                r.Get("/average_capacity/brand/{brand}", hd.AverageCapacityByBrand())
+                // Get vehicles by weight range (query)
+                r.Get("/weight", hd.SearchByWeightRange())
+        }</span>)
+
+        <span class="cov0" title="0">return</span>
+}
+
+// Run is a method that runs the application
+func (a *ApplicationDefault) Run() (err error) <span class="cov0" title="0">{
+        err = http.ListenAndServe(a.serverAddress, a.router)
+        return
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handler
+
+import (
+        "app/internal"
+        "app/platform/web/response"
+        "errors"
+        "net/http"
+        "strconv"
+
+        "github.com/go-chi/chi/v5"
+)
+
+// HandlerVehicle is a struct with methods that represent handlers for vehicles
+type HandlerVehicle struct {
+        // sv is the service that will be used by the handler
+        sv internal.ServiceVehicle
+}
+
+// NewHandlerVehicle is a function that returns a new instance of HandlerVehicle
+func NewHandlerVehicle(sv internal.ServiceVehicle) *HandlerVehicle <span class="cov8" title="1">{
+        return &amp;HandlerVehicle{sv: sv}
+}</span>
+
+// FindByColorAndYear returns a handler that returns a map of vehicles that match the color and fabrication year
+func (h *HandlerVehicle) FindByColorAndYear() http.HandlerFunc <span class="cov8" title="1">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                // request
+                color := chi.URLParam(r, "color")
+                year, err := strconv.Atoi(chi.URLParam(r, "year"))
+                if err != nil </span><span class="cov0" title="0">{
+                        response.Error(w, http.StatusBadRequest, "invalid year")
+                        return
+                }</span>
+
+                // process
+                <span class="cov8" title="1">v, err := h.sv.FindByColorAndYear(color, year)
+                if err != nil </span><span class="cov0" title="0">{
+                        response.Error(w, http.StatusInternalServerError, "internal error")
+                        return
+                }</span>
+
+                // response
+                <span class="cov8" title="1">response.JSON(w, http.StatusOK, map[string]any{
+                        "message": "vehicles found",
+                        "data": v,
+                })</span>
+        }
+}
+
+// FindByBrandAndYearRange returns a handler that returns a map of vehicles that match the brand and a range of fabrication years
+func (h *HandlerVehicle) FindByBrandAndYearRange() http.HandlerFunc <span class="cov0" title="0">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                // request
+                brand := chi.URLParam(r, "brand")
+                startYear, err := strconv.Atoi(chi.URLParam(r, "start_year"))
+                if err != nil </span><span class="cov0" title="0">{
+                        response.Error(w, http.StatusBadRequest, "invalid start_year")
+                        return
+                }</span>
+                <span class="cov0" title="0">endYear, err := strconv.Atoi(chi.URLParam(r, "end_year"))
+                if err != nil </span><span class="cov0" title="0">{
+                        response.Error(w, http.StatusBadRequest, "invalid end_year")
+                        return
+                }</span>
+
+                // process
+                <span class="cov0" title="0">v, err := h.sv.FindByBrandAndYearRange(brand, startYear, endYear)
+                if err != nil </span><span class="cov0" title="0">{
+                        response.Error(w, http.StatusInternalServerError, "internal error")
+                        return
+                }</span>
+
+                // response
+                <span class="cov0" title="0">response.JSON(w, http.StatusOK, map[string]any{
+                        "message": "vehicles found",
+                        "data": v,
+                })</span>
+        }
+}
+
+// AverageMaxSpeedByBrand returns a handler that returns the average speed of the vehicles by brand
+func (h *HandlerVehicle) AverageMaxSpeedByBrand() http.HandlerFunc <span class="cov0" title="0">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                // request
+                brand := chi.URLParam(r, "brand")
+
+                // process
+                average, err := h.sv.AverageMaxSpeedByBrand(brand)
+                if err != nil </span><span class="cov0" title="0">{
+                        switch </span>{
+                        case errors.Is(err, internal.ErrServiceNoVehicles):<span class="cov0" title="0">
+                                response.Error(w, http.StatusNotFound, "vehicles not found")</span>
+                        default:<span class="cov0" title="0">
+                                response.Error(w, http.StatusInternalServerError, "internal error")</span>
+                        }
+                        <span class="cov0" title="0">return</span>
+                }
+
+                // response
+                <span class="cov0" title="0">response.JSON(w, http.StatusOK, map[string]any{
+                        "message": "average max speed found",
+                        "data": average,
+                })</span>
+        }
+}
+
+// AverageCapacityByBrand returns a handler that returns the average capacity of the vehicles by brand
+func (h *HandlerVehicle) AverageCapacityByBrand() http.HandlerFunc <span class="cov0" title="0">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                // request
+                brand := chi.URLParam(r, "brand")
+
+                // process
+                average, err := h.sv.AverageCapacityByBrand(brand)
+                if err != nil </span><span class="cov0" title="0">{
+                        switch </span>{
+                        case errors.Is(err, internal.ErrServiceNoVehicles):<span class="cov0" title="0">
+                                response.Error(w, http.StatusNotFound, "vehicles not found")</span>
+                        default:<span class="cov0" title="0">
+                                response.Error(w, http.StatusInternalServerError, "internal error")</span>
+                        }
+                        <span class="cov0" title="0">return</span>
+                }
+
+                // response
+                <span class="cov0" title="0">response.JSON(w, http.StatusOK, map[string]any{
+                        "message": "average capacity found",
+                        "data": average,
+                })</span>
+        }
+}
+
+// SearchByWeightRange returns a handler that returns a map of vehicles that match the weight range
+func (h *HandlerVehicle) SearchByWeightRange() http.HandlerFunc <span class="cov0" title="0">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                // request
+                var query internal.SearchQuery
+
+                // check if query exists and decode
+                ok := r.URL.Query().Has("weight_min") &amp;&amp; r.URL.Query().Has("weight_max")
+                if ok </span><span class="cov0" title="0">{
+                        var err error
+                        query.FromWeight, err = strconv.ParseFloat(r.URL.Query().Get("weight_min"), 64)
+                        if err != nil </span><span class="cov0" title="0">{
+                                response.Error(w, http.StatusBadRequest, "invalid weight_min")
+                                return
+                        }</span>
+
+                        <span class="cov0" title="0">query.ToWeight, err = strconv.ParseFloat(r.URL.Query().Get("weight_max"), 64)
+                        if err != nil </span><span class="cov0" title="0">{
+                                response.Error(w, http.StatusBadRequest, "invalid weight_max")
+                                return
+                        }</span>
+                }
+
+                // process
+                <span class="cov0" title="0">v, err := h.sv.SearchByWeightRange(query, ok)
+                if err != nil </span><span class="cov0" title="0">{
+                        response.Error(w, http.StatusInternalServerError, "internal error")
+                        return
+                }</span>
+
+                // response
+                <span class="cov0" title="0">response.JSON(w, http.StatusOK, map[string]any{
+                        "message": "vehicles found",
+                        "data": v,
+                })</span>
+        }
+}</pre>
+		
+		<pre class="file" id="file3" style="display: none">package loader
+
+import (
+        "app/internal"
+        "encoding/json"
+        "os"
+)
+
+// NewLoaderVehicleJSON is a function that returns a new instance of LoaderVehicleJSON
+func NewLoaderVehicleJSON(path string) *LoaderVehicleJSON <span class="cov0" title="0">{
+        return &amp;LoaderVehicleJSON{
+                path: path,
+        }
+}</span>
+
+// LoaderVehicleJSON is a struct that implements the LoaderVehicle interface
+type LoaderVehicleJSON struct {
+        // path is the path to the file that contains the vehicles in JSON format
+        path string
+}
+
+// VehicleJSON is a struct that represents a vehicle in JSON format
+type VehicleJSON struct {
+        Id              int     `json:"id"`
+        Brand           string  `json:"brand"`
+        Model           string  `json:"model"`
+        Registration    string  `json:"registration"`
+        Color           string  `json:"color"`
+        FabricationYear int     `json:"year"`
+        Capacity        int     `json:"passengers"`
+        MaxSpeed        float64 `json:"max_speed"`
+        FuelType        string  `json:"fuel_type"`
+        Transmission    string  `json:"transmission"`
+        Weight          float64 `json:"weight"`
+        Height          float64 `json:"height"`
+        Length          float64 `json:"length"`
+        Width           float64 `json:"width"`
+}
+
+// Load is a method that loads the vehicles
+func (l *LoaderVehicleJSON) Load() (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        // open file
+        file, err := os.Open(l.path)
+        if err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">defer file.Close()
+
+        // decode file
+        var vehiclesJSON []VehicleJSON
+        err = json.NewDecoder(file).Decode(&amp;vehiclesJSON)
+        if err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // serialize vehicles
+        <span class="cov0" title="0">v = make(map[int]internal.Vehicle)
+        for _, vh := range vehiclesJSON </span><span class="cov0" title="0">{
+                v[vh.Id] = internal.Vehicle{
+                        Id: vh.Id,
+                        VehicleAttributes: internal.VehicleAttributes{
+                                Brand:           vh.Brand,
+                                Model:           vh.Model,
+                                Registration:    vh.Registration,
+                                Color:           vh.Color,
+                                FabricationYear: vh.FabricationYear,
+                                Capacity:        vh.Capacity,
+                                MaxSpeed:        vh.MaxSpeed,
+                                FuelType:        vh.FuelType,
+                                Transmission:    vh.Transmission,
+                                Weight:          vh.Weight,
+                                Dimensions: internal.Dimensions{
+                                        Height: vh.Height,
+                                        Length: vh.Length,
+                                        Width:  vh.Width,
+                                },
+                        },
+                }
+        }</span>
+
+        <span class="cov0" title="0">return</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package repository
+
+import "app/internal"
+
+// NewRepositoryReadVehicleMap is a function that returns a new instance of RepositoryReadVehicleMap
+func NewRepositoryReadVehicleMap(db map[int]internal.Vehicle) *RepositoryReadVehicleMap <span class="cov0" title="0">{
+        // default db
+        defaultDb := make(map[int]internal.Vehicle)
+        if db != nil </span><span class="cov0" title="0">{
+                defaultDb = db
+        }</span>
+        <span class="cov0" title="0">return &amp;RepositoryReadVehicleMap{db: defaultDb}</span>
+}
+
+// RepositoryReadVehicleMap is a struct that represents a vehicle repository
+type RepositoryReadVehicleMap struct {
+        // db is a map of vehicles
+        db map[int]internal.Vehicle
+}
+
+// FindAll is a method that returns a map of all vehicles
+func (r *RepositoryReadVehicleMap) FindAll() (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        v = make(map[int]internal.Vehicle)
+
+        // copy db
+        for key, value := range r.db </span><span class="cov0" title="0">{
+                v[key] = value
+        }</span>
+
+        <span class="cov0" title="0">return</span>
+}
+
+// FindByColorAndYear is a method that returns a map of vehicles that match the color and fabrication year
+func (r *RepositoryReadVehicleMap) FindByColorAndYear(color string, fabricationYear int) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        v = make(map[int]internal.Vehicle)
+
+        // filter db
+        for key, value := range r.db </span><span class="cov0" title="0">{
+                if value.Color == color &amp;&amp; value.FabricationYear == fabricationYear </span><span class="cov0" title="0">{
+                        v[key] = value
+                }</span>
+        }
+
+        <span class="cov0" title="0">return</span>
+}
+
+// FindByBrandAndYearRange is a method that returns a map of vehicles that match the brand and a range of fabrication years
+func (r *RepositoryReadVehicleMap) FindByBrandAndYearRange(brand string, startYear int, endYear int) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        v = make(map[int]internal.Vehicle)
+
+        // filter db
+        for key, value := range r.db </span><span class="cov0" title="0">{
+                if value.Brand == brand &amp;&amp; value.FabricationYear &gt;= startYear &amp;&amp; value.FabricationYear &lt;= endYear </span><span class="cov0" title="0">{
+                        v[key] = value
+                }</span>
+        }
+
+        <span class="cov0" title="0">return</span>
+}
+
+// FindByBrand is a method that returns a map of vehicles that match the brand
+func (r *RepositoryReadVehicleMap) FindByBrand(brand string) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        v = make(map[int]internal.Vehicle)
+
+        // filter db
+        for key, value := range r.db </span><span class="cov0" title="0">{
+                if value.Brand == brand </span><span class="cov0" title="0">{
+                        v[key] = value
+                }</span>
+        }
+
+        <span class="cov0" title="0">return</span>
+}
+
+// FindByWeightRange is a method that returns a map of vehicles that match the weight range
+func (r *RepositoryReadVehicleMap) FindByWeightRange(fromWeight float64, toWeight float64) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        v = make(map[int]internal.Vehicle)
+
+        // filter db
+        for key, value := range r.db </span><span class="cov0" title="0">{
+                if value.Weight &gt;= fromWeight &amp;&amp; value.Weight &lt;= toWeight </span><span class="cov0" title="0">{
+                        v[key] = value
+                }</span>
+        }
+
+        <span class="cov0" title="0">return</span>
+}</pre>
+		
+		<pre class="file" id="file5" style="display: none">package service
+
+import "app/internal"
+
+// ServiceVehicleDefault is a struct that represents the default service for vehicles
+type ServiceVehicleDefault struct {
+        // rp is the repository that will be used by the service
+        rp internal.RepositoryReadVehicle
+}
+
+// NewServiceVehicleDefault is a function that returns a new instance of ServiceVehicleDefault
+func NewServiceVehicleDefault(rp internal.RepositoryReadVehicle) *ServiceVehicleDefault <span class="cov0" title="0">{
+        return &amp;ServiceVehicleDefault{rp: rp}
+}</span>
+
+// FindByColorAndYear is a method that returns a map of vehicles that match the color and fabrication year
+func (s *ServiceVehicleDefault) FindByColorAndYear(color string, fabricationYear int) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        v, err = s.rp.FindByColorAndYear(color, fabricationYear)
+        return
+}</span>
+
+// FindByBrandAndYearRange is a method that returns a map of vehicles that match the brand and a range of fabrication years
+func (s *ServiceVehicleDefault) FindByBrandAndYearRange(brand string, startYear int, endYear int) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        v, err = s.rp.FindByBrandAndYearRange(brand, startYear, endYear)
+        return
+}</span>
+
+// AverageMaxSpeedByBrand is a method that returns the average speed of the vehicles by brand
+func (s *ServiceVehicleDefault) AverageMaxSpeedByBrand(brand string) (a float64, err error) <span class="cov0" title="0">{
+        // get vehicles by brand
+        v, err := s.rp.FindByBrand(brand)
+        if err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // check if there are vehicles
+        <span class="cov0" title="0">if len(v) == 0 </span><span class="cov0" title="0">{
+                err = internal.ErrServiceNoVehicles
+                return
+        }</span>
+
+        <span class="cov0" title="0">var totalSpeed float64
+        for _, vehicle := range v </span><span class="cov0" title="0">{
+                totalSpeed += vehicle.MaxSpeed
+        }</span>
+
+        <span class="cov0" title="0">a = totalSpeed / float64(len(v))
+        return</span>
+}
+                
+// AverageCapacityByBrand is a method that returns the average capacity of the vehicles by brand
+func (s *ServiceVehicleDefault) AverageCapacityByBrand(brand string) (a int, err error) <span class="cov0" title="0">{
+        // get vehicles by brand
+        v, err := s.rp.FindByBrand(brand)
+        if err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        
+        // check if there are vehicles
+        <span class="cov0" title="0">if len(v) == 0 </span><span class="cov0" title="0">{
+                err = internal.ErrServiceNoVehicles
+                return
+        }</span>
+
+        <span class="cov0" title="0">var totalCapacity int
+        for _, vehicle := range v </span><span class="cov0" title="0">{
+                totalCapacity += vehicle.Capacity
+        }</span>
+
+        <span class="cov0" title="0">a = totalCapacity / len(v)
+        return</span>
+}
+
+// SearchByWeightRange
+func (s *ServiceVehicleDefault) SearchByWeightRange(query internal.SearchQuery, ok bool) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        // check if query is set
+        if !ok </span><span class="cov0" title="0">{
+                v, err = s.rp.FindAll()
+                return
+        }</span>
+
+        <span class="cov0" title="0">v, err = s.rp.FindByWeightRange(query.FromWeight, query.ToWeight)
+        return</span>
+}
+        </pre>
+		
+		<pre class="file" id="file6" style="display: none">package service
+
+import (
+        "app/internal"
+        "errors"
+)
+
+type ServiceVehicleDefaultStub struct {
+}
+
+func NewServiceVehicleDefaultStub() *ServiceVehicleDefaultStub <span class="cov0" title="0">{
+        return &amp;ServiceVehicleDefaultStub{}
+}</span>
+
+func (s *ServiceVehicleDefaultStub) FindByColorAndYear(color string, fabricationYear int) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        if color == "blue" </span><span class="cov0" title="0">{
+                return v, errors.New("error")
+        }</span>
+        <span class="cov0" title="0">v = make(map[int]internal.Vehicle)
+        v[0] = internal.Vehicle{VehicleAttributes: internal.VehicleAttributes{Color: color, FabricationYear: fabricationYear}}
+
+        return v, nil</span>
+}
+
+func (s *ServiceVehicleDefaultStub) FindByBrandAndYearRange(brand string, startYear int, endYear int) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        return
+}</span>
+
+func (s *ServiceVehicleDefaultStub) AverageMaxSpeedByBrand(brand string) (a float64, err error) <span class="cov0" title="0">{
+
+        return
+}</span>
+
+func (s *ServiceVehicleDefaultStub) AverageCapacityByBrand(brand string) (a int, err error) <span class="cov0" title="0">{
+        return
+}</span>
+
+func (s *ServiceVehicleDefaultStub) SearchByWeightRange(query internal.SearchQuery, ok bool) (v map[int]internal.Vehicle, err error) <span class="cov0" title="0">{
+        return
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package request
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+        "net/http"
+)
+
+// JSON decodes json from request body to ptr
+var (
+        // ErrRequestContentTypeNotJSON is used when the request content type is not application/json.
+        ErrRequestContentTypeNotJSON = errors.New("request content type is not application/json")
+        // ErrRequestJSONInvalid is used when the request json is invalid.
+        ErrRequestJSONInvalid = errors.New("request json invalid")
+)
+
+// JSON decodes json from request body to ptr
+func JSON(r *http.Request, ptr any) (err error) <span class="cov8" title="1">{
+        // check content type
+        if r.Header.Get("Content-Type") != "application/json" </span><span class="cov8" title="1">{
+                err = ErrRequestContentTypeNotJSON
+                return
+        }</span>
+
+        // get body
+        <span class="cov8" title="1">err = json.NewDecoder(r.Body).Decode(ptr)
+        if err != nil </span><span class="cov8" title="1">{
+                err = fmt.Errorf("%w. %v", ErrRequestJSONInvalid, err)
+                return
+        }</span>
+
+        <span class="cov8" title="1">return</span>
+}</pre>
+		
+		<pre class="file" id="file8" style="display: none">package response
+
+import (
+        "encoding/json"
+        "fmt"
+        "net/http"
+)
+
+type errorResponse struct {
+        Status  string `json:"status"`
+        Message string `json:"message"`
+}
+
+func Error(w http.ResponseWriter, statusCode int, message string) <span class="cov0" title="0">{
+        // default status code
+        defaultStatusCode := http.StatusInternalServerError
+        // check if status code is valid
+        if statusCode &gt; 299 &amp;&amp; statusCode &lt; 600 </span><span class="cov0" title="0">{
+                defaultStatusCode = statusCode
+        }</span>
+
+        // response
+        <span class="cov0" title="0">body := errorResponse{
+                Status:  http.StatusText(defaultStatusCode),
+                Message: message,
+        }
+        bytes, err := json.Marshal(body)
+        if err != nil </span><span class="cov0" title="0">{
+                w.WriteHeader(http.StatusInternalServerError)
+                return
+        }</span>
+
+        // write response
+        <span class="cov0" title="0">w.WriteHeader(defaultStatusCode)
+        w.Header().Set("Content-Type", "application/json")
+        w.Write(bytes)</span>
+}
+
+func Errorf(w http.ResponseWriter, statusCode int, format string, args ...interface{}) <span class="cov0" title="0">{
+        message := fmt.Sprintf(format, args...)
+        Error(w, statusCode, message)
+}</pre>
+		
+		<pre class="file" id="file9" style="display: none">package response
+
+import (
+        "encoding/json"
+        "net/http"
+)
+
+// JSON writes json response
+func JSON(w http.ResponseWriter, code int, body any) <span class="cov8" title="1">{
+        // check body
+        if body == nil </span><span class="cov8" title="1">{
+                w.WriteHeader(code)
+                return
+        }</span>
+        
+        // marshal body
+        <span class="cov8" title="1">bytes, err := json.Marshal(body)
+        if err != nil </span><span class="cov8" title="1">{
+                // default error
+                w.WriteHeader(http.StatusInternalServerError)
+                return
+        }</span>
+
+        // set header
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+        // set status code
+        w.WriteHeader(code)
+
+        // write body
+        w.Write(bytes)</span>
+}</pre>
+		
+		<pre class="file" id="file10" style="display: none">package response
+
+import "net/http"
+
+// Text writes text response
+func Text(w http.ResponseWriter, code int, body string) <span class="cov8" title="1">{
+        // set header
+        w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+        // set status code
+        w.WriteHeader(code)
+
+        // write body
+        w.Write([]byte(body))
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
